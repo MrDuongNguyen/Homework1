@@ -1,0 +1,63 @@
+#include "stm32f4xx_ll_gpio.h"
+#include "stm32f4xx_ll_system.h"
+#include "stm32f4xx_ll_utils.h"
+
+void SystemClock_Config(void);
+void Configure_GPIO(void);
+
+int main(void) {
+    // Configure the system clock
+    SystemClock_Config();
+
+    // Initialize GPIO
+    Configure_GPIO();
+
+    while (1) {
+        // Toggle the LED on GPIO pin A5
+        LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_5);
+
+        // Delay for 1 second using SysTick
+        LL_mDelay(1000);
+    }
+}
+
+void SystemClock_Config(void) {
+    // Configure the system clock as needed
+    // This example uses the HSE with PLL at 168MHz
+    LL_FLASH_SetLatency(LL_FLASH_LATENCY_5);
+    LL_RCC_HSE_Enable();
+
+    while (LL_RCC_HSE_IsReady() != 1) {
+        // Wait for HSE to be ready
+    }
+
+    LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_8, 336, LL_RCC_PLLP_DIV_2);
+    LL_RCC_PLL_Enable();
+
+    while (LL_RCC_PLL_IsReady() != 1) {
+        // Wait for PLL to be ready
+    }
+
+    LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+    LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_4);
+    LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_2);
+    LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+
+    while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL) {
+        // Wait for system clock to be ready
+    }
+
+    // Update the SystemCoreClock variable
+    LL_SetSystemCoreClock(168000000);
+}
+
+void Configure_GPIO(void) {
+    // Enable the GPIOA peripheral clock
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+
+    // Configure GPIO pin A5 as output
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_5, LL_GPIO_SPEED_FREQ_LOW);
+    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_5, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_5, LL_GPIO_PULL_NO);
+}
